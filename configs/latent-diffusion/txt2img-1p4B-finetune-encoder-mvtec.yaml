@@ -1,6 +1,6 @@
 model:
   base_learning_rate: 2.0e-3
-  target: ldm.models.diffusion.ddpm.PANDA
+  target: ldm.models.diffusion.ddpm.FAST
   params:
     linear_start: 0.00085
     linear_end: 0.012
