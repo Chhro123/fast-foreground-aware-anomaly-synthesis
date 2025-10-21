@@ -1,16 +1,22 @@
-# FAST: Foreground-Aware Anomaly Synthesis via Two-branch Diffusion
+# FAST: Foreground‑aware Diffusion with Accelerated Sampling Trajectory for Segmentation‑oriented Anomaly Synthesis
+✨ Update (2025 10/21): 
+1. Our paper FAST has been accepted at NeurIPS 2025
+2. We have thoroughly refined our implementation, addressing several limitations — including the introduction of an Adaptor (called FineTune module in ddpm.py) to incorporate mask information into the network for better performance.
+3. For reproducibility, you can download the **official checkpoint** of the Latent Diffusion Model (LDM) from the following link:  
+🔗 [Official LDM Checkpoint – txt2img-f8-large](https://ommer-lab.com/files/latent-diffusion/nitro/txt2img-f8-large/model.ckpt)  
+
+> **Note:** After loading the pretrained LDM weights, you only need to train the **FARM** and the newly added **Adaptor** modules, which are lightweight compared to the full LDM checkpoint and can be efficiently trained on standard GPUs.
 
 ## 📉 Introduction
 
-**FAST** (**Foreground-aware Diffusion with Accelerated Sampling Trajectory for Segmentation-oriented Anomaly Synthesis**) is a novel and efficient framework for generating synthetic anomalies tailored for **anomaly segmentation** tasks, specifically designed to improve both the **efficiency** and **fidelity** of synthesized anomalies.
+**FAST** (**Foreground-aware Diffusion with Accelerated Sampling Trajectory for Segmentation-oriented Anomaly Synthesis**) is a novel and efficient framework for generating synthetic anomalies tailored for **anomaly segmentation** tasks, specifically designed to improve both the **efficiency** and **fidelity** of synthesized anomalies, 
 
 ### 🔹 Key Innovations of FAST:
 
 - **Anomaly-Informed Accelerated Sampling (AIAS):** A training-free sampling algorithm that divides the reverse diffusion into coarse-to-fine segments. By analytically aggregating multiple DDPM transitions, AIAS achieves up to 100× acceleration while maintaining structural alignment under anomaly mask guidance.
 - **Foreground-Aware Reconstruction Module (FARM):** Ensures fine-grained and well-aligned anomaly injection by enhancing the synthesis of critical foreground regions.
-- **Multi-granularity Diffusion:** Enables effective generation of both large and small anomalies, addressing limitations of conventional approaches.
 
-FAST achieves **state-of-the-art (SOTA)** results on benchmark datasets including **MVTec-AD**, **BTAD**, and **VisA**, outperforming previous anomaly synthesis models in segmentation accuracy and synthesis realism.
+FAST achieves impressive results on benchmark datasets including **MVTec-AD**, **BTAD**, outperforming previous anomaly synthesis models in segmentation accuracy and synthesis realism .
 
 ---
 
