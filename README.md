@@ -1,4 +1,7 @@
 # FAST: Foreground‑aware Diffusion with Accelerated Sampling Trajectory for Segmentation‑oriented Anomaly Synthesis
+✨ Update (2025 11/05):
+Added comprehensive code annotations across key module and files to clarify inputs/outputs, mask formats, and sampling steps.
+
 ✨ Update (2025 10/21): 
 1. Our paper FAST has been accepted at NeurIPS 2025
 2. We have thoroughly refined our implementation, addressing several limitations — including the introduction of an Adaptor (called FineTune module in ddpm.py) to incorporate mask information into the network for better performance.
