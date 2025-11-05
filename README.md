@@ -1,5 +1,7 @@
 # FAST: Foreground‑aware Diffusion with Accelerated Sampling Trajectory for Segmentation‑oriented Anomaly Synthesis
 ✨ Update (2025 11/05):
+
+
 Added comprehensive code annotations across key module and files to clarify inputs/outputs, mask formats, and sampling steps.
 
 ✨ Update (2025 10/21): 
