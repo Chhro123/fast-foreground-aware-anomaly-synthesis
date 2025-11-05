@@ -12,7 +12,6 @@ import cv2
 from utils import random_transform
 import numpy as np
 imagenet_templates_smallest = [
-    #  '{} lan_fangbaofa'
     'Anomaly {}',
 ]
 
@@ -31,7 +30,7 @@ per_img_token_list = [
     'א', 'ב', 'ג', 'ד', 'ה', 'ו', 'ז', 'ח', 'ט', 'י', 'כ', 'ל', 'מ', 'נ', 'ס', 'ע', 'פ', 'צ', 'ק', 'ר', 'ש', 'ת',
 ]
 
-# 先训一版蓝膜
+# 父类
 class Personalized_mvtec_encoder(Dataset):
     def __init__(self,
                  mvtec_path,
@@ -83,7 +82,6 @@ class Personalized_mvtec_encoder(Dataset):
             mask_filename = mask_filename.replace("/image/", "/mask/")
 
             if not os.path.exists(mask_filename):
-                print("jjjjjjjjjjjjjjjjj")
                 print(mask_filename)
                 continue
            
@@ -103,7 +101,6 @@ class Personalized_mvtec_encoder(Dataset):
 
             image = Image.fromarray(image)
             mask = Image.fromarray(mask)
-            # # 为了确保图像正确，resize到256x256
             size = 256
             image = image.resize((size, size), resample=self.interpolation)
             mask = mask.resize((size, size), resample=self.interpolation)
@@ -114,7 +111,6 @@ class Personalized_mvtec_encoder(Dataset):
             mask[mask < 0.5] = 0
             mask[mask >= 0.5] = 1
     
-            # self.data.append((image,mask,anomaly_name))
             self.data.append((image,mask,anomaly_name))
 
         self.num_images = len(self.data)
@@ -199,10 +195,6 @@ class MvtecDataset (Personalized_mvtec_encoder):
         mask_path=os.path.join(self.data_root,'defect/')
         mask_files = get_files(mask_path)
 
-
-        # img_files=[os.path.join(self.data_root,file_name) for file_name in img_files]
-        # mask_files=[os.path.join(self.data_root,file_name) for file_name in mask_files]
-
         for idx in range(len(mask_files)):
             mask_filename = mask_files[idx]
 
@@ -210,15 +202,14 @@ class MvtecDataset (Personalized_mvtec_encoder):
             img_filename = img_filename.replace("/defect/", "/good/")
 
             if not os.path.exists(img_filename):
-                print("jjjjjjjjjjjjjjjjj")
                 print(mask_filename)
                 continue
            
             parts = img_filename.split(os.sep)
-            # 获取所需的部分
+            # 根据文件的绝对路径，获取物品种类和异常的种类
             object = parts[7]  # 'bottle'
             broken = os.path.basename(img_filename).split('.')[0][0:-4]
-            # 用 + 连接
+            # 字符串拼接
             anomaly_name = object + '+' + broken
             # print(anomaly_name)
 
@@ -232,7 +223,6 @@ class MvtecDataset (Personalized_mvtec_encoder):
 
             image = Image.fromarray(image)
             mask = Image.fromarray(mask)
-            # # 为了确保图像正确，resize到256x256
             size = 256
             image = image.resize((size, size), resample=self.interpolation)
             mask = mask.resize((size, size), resample=self.interpolation)
@@ -289,6 +279,8 @@ class MvtecDataset (Personalized_mvtec_encoder):
         example["name"]=self.data[idx][2]
     
         return example
+        
+# 要求输入掩码，异常图像，输出合成异常图像，用于训练
 
 class MvtecDataset_singel_anomaly (Personalized_mvtec_encoder):
     def __init__(self,
@@ -336,17 +328,14 @@ class MvtecDataset_singel_anomaly (Personalized_mvtec_encoder):
             img_filename = img_filename.replace("/ground_truth/", "/test/")
 
             if not os.path.exists(img_filename):
-                print("jjjjjjjjjjjjjjjjj")
                 print(mask_filename)
                 continue
            
             parts = img_filename.split(os.sep)
-            # 获取所需的部分
+            # 根据文件的绝对路径，获取物品种类和异常的种类
             object = parts[7]  # 'bottle'
             broken = parts[9]
-            # 用 + 连接
             anomaly_name = object + '+' + broken
-            # print(anomaly_name)
 
             image = Image.open(img_filename)
             mask = Image.open(mask_filename).convert("L")
@@ -358,7 +347,6 @@ class MvtecDataset_singel_anomaly (Personalized_mvtec_encoder):
 
             image = Image.fromarray(image)
             mask = Image.fromarray(mask)
-            # # 为了确保图像正确，resize到256x256
             size = 256
             image = image.resize((size, size), resample=self.interpolation)
             mask = mask.resize((size, size), resample=self.interpolation)
@@ -369,7 +357,6 @@ class MvtecDataset_singel_anomaly (Personalized_mvtec_encoder):
             mask[mask < 0.5] = 0
             mask[mask >= 0.5] = 1
     
-            # self.data.append((image,mask,anomaly_name))
             self.data.append((image,mask,anomaly_name))
 
         self.num_images = len(self.data)
@@ -418,7 +405,7 @@ class MvtecDataset_singel_anomaly (Personalized_mvtec_encoder):
 
 
 
-
+# 要求输入掩码，干净的背景图，输出合成异常图像，用于验证结果
 class MvtecDataset_singel_anomaly_validation (Personalized_mvtec_encoder):
     def __init__(self,
                  mvtec_path,
@@ -466,19 +453,18 @@ class MvtecDataset_singel_anomaly_validation (Personalized_mvtec_encoder):
 
            
             parts = img_filename.split(os.sep)
-            # 获取所需的部分
+            # 根据文件的绝对路径，获取物品种类和异常的种类
             object1 = parts[7]  # 'bottle'
             broken = parts[9]
             # 用 + 连接
             anomaly_name = object1 + '+' + broken
 
-            # 这里重新修改img的路径
+            # 修改img路径，自动导入正常的图像数据
             parts[9] = "good"
             # 重新拼接路径
             img_filename = os.sep.join(parts)
 
             if not os.path.exists(img_filename):
-                print("jjjjjjjjjjjjjjjjj")
                 print(mask_filename)
                 continue
 
@@ -493,7 +479,6 @@ class MvtecDataset_singel_anomaly_validation (Personalized_mvtec_encoder):
 
             image = Image.fromarray(image)
             mask = Image.fromarray(mask)
-            # # 为了确保图像正确，resize到256x256
             size = 256
             image = image.resize((size, size), resample=self.interpolation)
             mask = mask.resize((size, size), resample=self.interpolation)
@@ -551,7 +536,7 @@ class MvtecDataset_singel_anomaly_validation (Personalized_mvtec_encoder):
     
         return example
     
-    
+# 输入掩码路径和干净图像路径，输出带有干净背景，指定异常区域的异常图
 class Mvtec_generation_dataset (Personalized_mvtec_encoder):
     def __init__(self,
                  mvtec_path,
@@ -615,6 +600,7 @@ class Mvtec_generation_dataset (Personalized_mvtec_encoder):
 
 
     def __len__(self):
+        # 每次生成2000张
         return 2000
 
     def __getitem__(self, idx):
@@ -625,15 +611,14 @@ class Mvtec_generation_dataset (Personalized_mvtec_encoder):
             placeholder_string = f"{self.coarse_class_text} {placeholder_string}"
 
         text = random.choice(imagenet_templates_smallest).format(placeholder_string)
+        # 随机选择异常掩码和正常图像
         img_filename = self.img_files[random.randint(0,len(self.img_files)-1)]
         mask_filename = self.mask_files[random.randint(0,len(self.mask_files)-1)]
 
         
         parts = mask_filename.split(os.sep)
-        # 获取所需的部分
         object1 = parts[7]  # 'bottle'
         broken = parts[9]
-        # 用 + 连接
         anomaly_name = object1 + '+' + broken
     
         image = Image.open(img_filename)
@@ -646,7 +631,6 @@ class Mvtec_generation_dataset (Personalized_mvtec_encoder):
 
         image = Image.fromarray(image)
         mask = Image.fromarray(mask)
-        # # 为了确保图像正确，resize到256x256
         size = 256
         image = image.resize((size, size), resample=self.interpolation)
         mask = mask.resize((size, size), resample=self.interpolation)
