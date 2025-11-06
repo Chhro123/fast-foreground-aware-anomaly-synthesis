@@ -2,7 +2,7 @@
 ✨ Update (2025 11/05):
 
 
-Added comprehensive code annotations across key module and files to clarify inputs/outputs, mask formats, and sampling steps.
+We add some annotations across key module and files to clarify inputs/outputs, mask formats, and sampling steps.
 
 ✨ Update (2025 10/21): 
 1. Our paper FAST has been accepted at NeurIPS 2025
