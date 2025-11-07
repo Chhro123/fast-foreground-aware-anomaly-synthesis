@@ -44,30 +44,6 @@ def uniform_on_device(r1, r2, shape, device):
 
 import torch.nn.functional as F
 
-def gaussian_kernel(kernel_size=5, sigma=2.0, channels=1):
-    """生成二维高斯核"""
-    ax = torch.arange(-kernel_size // 2 + 1., kernel_size // 2 + 1.)
-    xx, yy = torch.meshgrid(ax, ax, indexing='ij')
-    kernel = torch.exp(-(xx**2 + yy**2) / (2. * sigma**2))
-    kernel = kernel / torch.sum(kernel)
-    kernel = kernel.view(1, 1, kernel_size, kernel_size)
-    kernel = kernel.repeat(channels, 1, 1, 1)
-    return kernel
-
-def feather_mask(mask, kernel_size=5, sigma=2.0):
-    """
-    对二值掩码进行羽化处理，返回一个软 mask
-    mask: [B, 1, H, W]，二值掩码（异常=1，背景=0）
-    """
-    channels = mask.shape[1]
-    kernel = gaussian_kernel(kernel_size, sigma, channels).to(mask.device)
-    # 采用反射填充以保证边缘不受影响
-    pad = kernel_size // 2
-    mask_padded = F.pad(mask, [pad, pad, pad, pad], mode='reflect')
-    soft_mask = F.conv2d(mask_padded, kernel, groups=channels)
-    return soft_mask
-
-
 class DDPM(pl.LightningModule):
     # classic DDPM with Gaussian diffusion, in image space
     def __init__(self,
@@ -94,7 +70,7 @@ class DDPM(pl.LightningModule):
                  unfreeze_model=False,
                  model_lr=1e-3,
                  v_posterior=0.,  # weight for choosing posterior variance as sigma = (1-v) * beta_tilde + v * beta
-                 l_simple_weight=2., #之前是4
+                 l_simple_weight=2., 
                  conditioning_key=None,
                  parameterization="eps",  # all assuming fixed variance schedules
                  scheduler_config=None,
@@ -206,7 +182,7 @@ class DDPM(pl.LightningModule):
 
 
 
-    
+    # AIAS的为不同step预先计算对应的结果
     def _compute_multistep_coefficients(self, boundaries):
         # 计算 multi_prod_A, multi_sum_B 和 multi_log_sigma_sq
         num_segments = boundaries.shape[0] - 1
@@ -2555,14 +2531,10 @@ class FAST(DDPM):
 
         # 采样得到噪声
         x_noisy = self.q_sample(x_start=x_start, t=t, noise=noise)
-
+        # FARM学习异常内容
         x_start_rec = self.FARM(x_noisy,mask,t=t)
-
-        
         x_noisy_rec = self.q_sample(x_start=x_start_rec, t=t, noise=noise)
-
-    
-        # 加入预测过程
+        # 将FARM的加入去噪轨迹
         x_noisy_predicted = x_noisy*(1-mask) + x_noisy_rec* mask
         model_output = self.apply_model(x_noisy_predicted, t, cond,mask=mask)
 
@@ -2853,13 +2825,11 @@ class FAST(DDPM):
             noise = noise * sigma
 
             img = x_mean + noise
-            # 添加某些背景信息作为条件
+            # 在某些步数内添加某些背景信息作为条件
             if t_end < 750 and t_end > 250:
                 clean_img_noisy = self.q_sample(x_start=clean_img, t=ts_end)
                 img = clean_img_noisy *(1-mask) + img * (mask)
             
-           
-
             if seg % log_every_t == 0 or seg == timesteps - 1:
                 intermediates.append(img)
             if callback: callback(seg)
@@ -2995,23 +2965,17 @@ class FAST(DDPM):
                 list(map(lambda x: x[:batch_size], cond[key])) for key in cond}
             else:
                 cond = [c[:batch_size] for c in cond] if isinstance(cond, list) else cond[:batch_size]
-        
-        # return self.p_sample_multistep_loop(cond,
-        #                           shape,
-        #                           clean_img = clean_img,
-        #                           boundaries = boundaries,
-        #                           return_intermediates=return_intermediates, x_T=x_T,
-        #                           verbose=verbose, timesteps=timesteps, quantize_denoised=quantize_denoised,
-        #                           mask=mask, x0=x0, embedding_position = embedding_position)
-
-
-        return self.p_sample_dpm(cond,
+              
+        # AIAS进行采样
+        return self.p_sample_multistep_loop(cond,
                                   shape,
                                   clean_img = clean_img,
                                   boundaries = boundaries,
                                   return_intermediates=return_intermediates, x_T=x_T,
                                   verbose=verbose, timesteps=timesteps, quantize_denoised=quantize_denoised,
                                   mask=mask, x0=x0, embedding_position = embedding_position)
+
+
 
     
     
